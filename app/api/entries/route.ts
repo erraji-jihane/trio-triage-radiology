@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-const WEBHOOK_URL = "REDACTED_WEBHOOK_URL";
+const WEBHOOK_URL =
+  "REDACTED_WEBHOOK_URL";
 
 export async function POST(request: Request) {
   try {
