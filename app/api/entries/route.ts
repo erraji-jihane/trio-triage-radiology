@@ -5,7 +5,7 @@ import path from "path";
 
 //where to save data
 const filePath = path.join(process.cwd(), "data", "entries.json");
-
+const WEBHOOK_URL = "REDACTED_WEBHOOK_URL"
 //read data from file 
 export async function POST(request: Request) {
   try {
@@ -24,6 +24,21 @@ export async function POST(request: Request) {
     
     // Save everything back
     fs.writeFileSync(filePath, JSON.stringify(entries, null, 2));
+
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name: newEntry.fullName,
+            cin: newEntry.cin,
+            symptoms: newEntry.symptoms,
+            arrival_mode: newEntry.arrivalMode
+        })
+      });
+    } catch (webhookError) {
+      console.error("Webhook trigger failed:", webhookError);
+    }
     
     // Return success
     return NextResponse.json({ success: true });
