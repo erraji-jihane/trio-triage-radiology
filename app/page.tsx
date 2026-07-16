@@ -62,14 +62,11 @@ export default function Home() {
         <aside className="relative flex h-[38svh] min-h-[18rem] flex-col overflow-hidden bg-[#014275] px-7 pt-10 pb-8 text-white sm:px-10 lg:min-h-0 lg:h-auto lg:px-10 lg:py-11">
           <div aria-hidden="true" className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-white/15" />
           <div aria-hidden="true" className="absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-[#0c5b93]" />
-          <Image
-            src="/aba-technology-logo.png"
-            alt="ABA Technology"
-            width={440}
-            height={440}
-            priority
-            className="absolute right-5 top-5 z-10 h-auto w-14 object-contain sm:right-8 sm:top-7 sm:w-16 lg:left-10 lg:right-auto lg:top-10 lg:w-24"
-          />
+          <div className="absolute right-5 top-5 z-10 flex items-center gap-2 sm:right-8 sm:top-7 sm:gap-3 lg:left-10 lg:right-auto lg:top-10 lg:gap-4">
+            <Image src="/aba-technology-logo.png" alt="ABA Technology" width={440} height={440} priority className="h-auto w-12 object-contain sm:w-14 lg:w-20" />
+            <Image src="/auil-logo.png" alt="Al Akhawayn University in Ifrane" width={1240} height={960} priority className="h-auto w-12 object-contain sm:w-14 lg:w-20" />
+            <Image src="/afretec-logo.png" alt="Afretec Network" width={187} height={213} priority className="h-auto w-8 object-contain sm:w-10 lg:w-14" />
+          </div>
 
           <div className="relative lg:pt-24">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#a8d7ef]">TRIO clinical intake</p>
