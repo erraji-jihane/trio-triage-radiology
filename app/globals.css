@@ -54,11 +54,28 @@
   100% { transform: scale(1); }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1024px) and (max-width: 1279px) {
   .intake-viewport {
     width: 133.333333%;
     min-height: calc(133.333svh - 5.333rem);
     zoom: 0.75;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+  .intake-viewport {
+    width: 117.647059%;
+    min-height: calc(117.647svh - 4.706rem);
+    zoom: 0.85;
+  }
+}
+
+@media (min-width: 1536px) {
+  .intake-viewport {
+    width: 100%;
+    max-width: 96rem;
+    min-height: calc(100svh - 4rem);
+    zoom: 1;
   }
 }
 
