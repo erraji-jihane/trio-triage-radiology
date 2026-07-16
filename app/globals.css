@@ -54,6 +54,14 @@
   100% { transform: scale(1); }
 }
 
+@media (min-width: 1024px) {
+  .intake-viewport {
+    width: 133.333333%;
+    min-height: calc(133.333svh - 5.333rem);
+    zoom: 0.75;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
