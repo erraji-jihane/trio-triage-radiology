@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<base href="/scan/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>T.R.I.O — AI Scan Intake</title>
@@ -113,7 +114,7 @@
 </head>
 <body>
 
-<!-- ===== logos (put your assets/ folder next to this file) ===== -->
+<!-- ===== logos (from assets/ next to this file) ===== -->
 <div class="logobar">
   <img class="applogo" id="logoTri" alt="">
   <div class="spacer"></div>
@@ -168,8 +169,8 @@
 
 <script>
 /* ================= CONFIG =================
-   1) Paste your scan-flowchart webhook URL (Webhook Trigger 1): */
-const WEBHOOK_URL = "/api/proxy";
+   1) Server route that forwards to TRIO_SCAN_WEBHOOK_URL (app/api/scan/route.ts): */
+const WEBHOOK_URL = "/api/scan";
 /* 2) Live TRIO-DB tabs: in Google Sheets use File > Share > Publish to web,
       choose CSV for each tab, and paste the three links here. */
 const PATIENTS_CSV = "PASTE_PUBLISHED_CSV_URL_FOR_PATIENTS_TAB";
@@ -205,6 +206,20 @@ function parseCSVmini(t) {
 }
 const fetchCSV = url => fetch(url + "&t=" + Date.now(), {cache:"no-store"}).then(r => r.text()).then(parseCSVmini);
 
+/* ---- demo data (same sample as the ER dashboard), used until the CSV links are pasted ---- */
+const DEMO_MODE = [PATIENTS_CSV, ROOMS_CSV, DOCTORS_CSV].some(u => u.startsWith("PASTE"));
+const DEMO = {
+  patients: [
+    ["web-001","Khalil B.","N/A","stabbed in abdomen, heavy bleeding","ambulance","95","critical"],
+    ["web-002","Samira E.","AB1234","chest pain radiating to left arm","ambulance","82","critical"],
+    ["web-003","Omar T.","CD5678","fell from ladder, leg deformity","walk-in","64","urgent"],
+    ["web-004","Asmae R.","N/A","persistent fever 39.5°C","walk-in","55","urgent"],
+    ["web-005","Hajar L.","EF9012","small cut on finger","walk-in","15","routine"]
+  ],
+  rooms: [["R4","imaging","free",""], ["R7","imaging","occupied","web-002"]],
+  doctors: [["Mohamed ben","1","212600000001","radiologist"]]
+};
+
 /* ---- derive the scan type/region from the symptoms ---- */
 function deriveScan(sym) {
   const s = String(sym || "").toLowerCase();
@@ -224,7 +239,9 @@ const sel = document.getElementById("patientSel");
 
 async function boot() {
   try {
-    const [pts, rooms, docs] = await Promise.all([fetchCSV(PATIENTS_CSV), fetchCSV(ROOMS_CSV), fetchCSV(DOCTORS_CSV)]);
+    const [pts, rooms, docs] = DEMO_MODE
+      ? [DEMO.patients, DEMO.rooms, DEMO.doctors]
+      : await Promise.all([fetchCSV(PATIENTS_CSV), fetchCSV(ROOMS_CSV), fetchCSV(DOCTORS_CSV)]);
     PATIENTS = pts.filter(r => r[0] && r[0].toLowerCase() !== "patient_id")
                   .sort((a,b) => Number(b[5]) - Number(a[5]));   // urgency first
     // room + radiologist
