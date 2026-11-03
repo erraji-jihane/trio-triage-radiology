@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# T.R.I.O: Triage, Routing & Imaging Orchestration
 
-## Getting Started
+An AI-assisted emergency-department workflow for radiology: patients are triaged from their symptoms at intake, routed to an imaging room and a radiologist, and their scans get an AI pre-read before a doctor looks at them.
 
-First, run the development server:
+Built in a team of five at the **Fusion AI Hackathon** (AUI AI Summer School 2026), with ABA Technology and the Afretec Network.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## The problem
+
+Radiologists read large volumes of scans under time pressure, and fatigue is linked to missed findings. In the emergency department, urgent cases can wait in the same queue as routine ones. TRIO puts the most urgent patients first and gives the radiologist a pre-read to start from, without taking the decision away from the doctor.
+
+## How it works
+
+```text
+ Patient intake form (Next.js)          Scan intake page (scan-intake/)
+   name, ID, symptoms, arrival mode        pick a patient from the live ER queue,
+            │                              attach the scan image
+            ▼ /api/entries                           │ /api/proxy
+   ┌──────────────────────────────┐        ┌────────────────────────────────┐
+   │ TRIO-INTAKE automation        │        │ TRIO-SCAN automation            │
+   │ LLM triage → urgency score,   │        │ AI pre-read of the image,       │
+   │ queue entry, alerts           │        │ flags abnormalities, reports    │
+   └──────────────────────────────┘        │ to the assigned radiologist     │
+                    │                       └────────────────────────────────┘
+                    ▼                                    │
+          TRIO-DB (Google Sheets): patients · imaging rooms · doctors
+                    │
+                    ▼
+     ER dashboard + WhatsApp alerts to staff
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Intake** (`app/`): a responsive Next.js form. The server route forwards the submission to the triage automation, so the webhook URL never reaches the browser.
+- **Triage**: an LLM node in the Fusion visual automation platform scores urgency from the symptoms using a clinical triage prompt with structured JSON output. The automation itself lives in the Fusion platform, not in this repo.
+- **Scan intake** (`scan-intake/`): a single-page tool for the imaging desk. It loads the ER queue sorted by urgency, suggests the scan type and region from the symptoms, picks a free imaging room and an on-call radiologist, compresses the image and sends it for the AI pre-read.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Running it
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Intake form
 
-## Learn More
+```bash
+npm install
+cp .env.example .env.local   # set TRIO_WEBHOOK_URL
+npm run dev                  # http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Scan intake
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`scan-intake/` is a static page plus one Vercel serverless function. Deploy it as its own Vercel project with `scan-intake` as the root directory and set `TRIO_SCAN_WEBHOOK_URL`. In `index.html`, paste the published-CSV links of the three TRIO-DB tabs.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech stack
 
-## Deploy on Vercel
+Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Vercel serverless functions · Fusion AI automation platform · Groq LLM · Google Sheets · WhatsApp (Green API)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Team
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Jihane Erraji
+- Khalil Berjaoui
+- Mehdi El Karimi
+- Zineb El Koussaimi
+- Asma Ouabd

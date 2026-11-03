@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T.R.I.O — AI Scan Intake</title>
+<style>
+  :root {
+    --navy:   #16436e;
+    --navy-2: #0f3357;
+    --accent: #b7332e;
+    --ink:    #1c2b3a;
+    --muted:  #7a8794;
+    --line:   #d8dee5;
+    --bg:     #f4f6f8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--ink);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 0 18px 28px;
+  }
+
+  /* ===== logo bar ===== */
+  .logobar {
+    width: 100%; max-width: 1180px;
+    display: flex; align-items: center; gap: 20px;
+    padding: 14px 6px 12px;
+  }
+  .applogo { height: 46px; width: auto; object-fit: contain; }
+  .logobar .spacer { flex: 1; }
+  .plogo { height: 34px; width: auto; object-fit: contain; }
+  #logoAfretec { height: 62px; }
+
+  .card {
+    display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(340px, 1.3fr);
+    width: 100%; max-width: 1180px; min-height: 600px;
+    background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 18px 50px rgba(15,51,87,.18);
+  }
+  @media (max-width: 820px) { .card { grid-template-columns: 1fr; } .side { min-height: 200px; } }
+
+  /* left blue panel */
+  .side {
+    background: radial-gradient(1200px 600px at 120% -10%, #1d558c 0%, var(--navy) 45%, var(--navy-2) 100%);
+    color: #fff; padding: 38px 34px; display: flex; flex-direction: column;
+  }
+  .side .kicker { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: #bcd2e6; margin-bottom: 18px; }
+  .side h1 { font-size: 38px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
+  .side .sub2 { margin-top: 14px; font-size: 14px; color: #bcd2e6; line-height: 1.6; }
+  .side .bottom { margin-top: auto; }
+  .side .trio { font-size: 26px; letter-spacing: .35em; font-weight: 700; }
+  .side .tag { font-size: 13px; color: #bcd2e6; margin-top: 6px; }
+
+  /* right form */
+  .form { padding: 38px 52px 36px; }
+  .dept { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--navy); font-weight: 700; }
+  h2 { font-size: 30px; font-weight: 750; margin: 4px 0 6px; }
+  .hint { font-size: 13.5px; color: var(--muted); margin-bottom: 22px; }
+
+  label { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 7px; }
+  label .req { color: var(--accent); }
+  select, input[type=text] {
+    width: 100%; border: none; border-bottom: 1.5px solid var(--line);
+    padding: 9px 2px; font-size: 15px; color: var(--ink); background: transparent; outline: none;
+    font-family: inherit; cursor: pointer;
+  }
+  select:focus { border-bottom-color: var(--navy); }
+  .block { margin-bottom: 20px; }
+
+  /* auto-filled patient card */
+  .autocard {
+    background: #f2f7fc; border: 1px solid #d5e3f1; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 20px; font-size: 13.5px; color: var(--ink);
+    display: none;
+  }
+  .autocard.show { display: block; }
+  .autocard .rowline { display: flex; gap: 8px; margin: 3px 0; }
+  .autocard .k { color: var(--muted); min-width: 120px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; padding-top: 2px; }
+  .autocard .v { font-weight: 600; }
+  .autocard .v.small { font-weight: 400; color: #44546b; }
+
+  /* big drop zone — the star of the page */
+  .drop {
+    border: 2px dashed #b9c9da; border-radius: 12px; padding: 26px;
+    display: flex; align-items: center; gap: 20px; cursor: pointer; margin-bottom: 20px;
+    transition: border-color .15s, background .15s;
+    background: #fbfdff;
+  }
+  .drop:hover, .drop.over { border-color: var(--navy); background: #f2f7fc; }
+  .drop .thumb {
+    width: 110px; height: 110px; flex: none; border-radius: 10px; background: #0d1620;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    color: #5b7186; font-size: 34px;
+  }
+  .drop .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .drop .dtxt b { display: block; font-size: 16px; color: var(--ink); margin-bottom: 4px; }
+  .drop .dtxt span { font-size: 13px; color: var(--muted); }
+  .drop input { display: none; }
+
+  button {
+    width: 100%; padding: 16px; border: none; border-radius: 4px; cursor: pointer;
+    background: var(--navy); color: #fff; font-size: 14px; font-weight: 700;
+    letter-spacing: .18em; text-transform: uppercase; transition: background .15s;
+  }
+  button:hover { background: var(--navy-2); }
+  button:disabled { background: #9db2c6; cursor: wait; }
+
+  .status { margin-top: 14px; font-size: 14px; display: none; padding: 12px 14px; border-radius: 8px; }
+  .status.ok  { display: block; background: #e8f6e8; color: #1c6b1c; border: 1px solid #bfe3bf; }
+  .status.err { display: block; background: #fdecec; color: #a33030; border: 1px solid #f0c4c4; }
+</style>
+</head>
+<body>
+
+<!-- ===== logos (put your assets/ folder next to this file) ===== -->
+<div class="logobar">
+  <img class="applogo" id="logoTri" alt="">
+  <div class="spacer"></div>
+  <img class="plogo" id="logoAbba" alt="">
+  <img class="plogo" id="logoAfretec" alt="">
+  <img class="plogo" id="logoAuil" alt="">
+</div>
+
+<div class="card">
+  <div class="side">
+    <div class="kicker">T.R.I.O · Imaging</div>
+    <h1>AI Scan<br>Intake.</h1>
+    <div class="sub2">Attach the scan — TRIO-SCAN pre-reads it, flags abnormalities and reports to the assigned doctor on the ER dashboard. Patient data comes straight from triage.</div>
+    <div class="bottom">
+      <div class="trio">T.R.I.O</div>
+      <div class="tag">Triage, Routing &amp; Imaging Orchestration</div>
+    </div>
+  </div>
+
+  <div class="form">
+    <div class="dept">Emergency Department · Imaging</div>
+    <h2>Submit a scan</h2>
+    <p class="hint">Pick the patient, attach the scan picture, send. Everything else is automatic.</p>
+
+    <div class="block">
+      <label>Patient (live from the ER queue) <span class="req">*</span></label>
+      <select id="patientSel"><option value="">loading queue…</option></select>
+    </div>
+
+    <div class="autocard" id="autoCard">
+      <div class="rowline"><span class="k">Symptoms</span><span class="v small" id="apSym">—</span></div>
+      <div class="rowline"><span class="k">Triage score</span><span class="v" id="apScore">—</span></div>
+      <div class="rowline"><span class="k">Suggested scan</span><span class="v" id="apScan">—</span></div>
+      <div class="rowline"><span class="k">Imaging room</span><span class="v" id="apRoom">assigning…</span></div>
+      <div class="rowline"><span class="k">Radiologist</span><span class="v" id="apDoc">assigning…</span></div>
+    </div>
+
+    <label>Scan picture <span class="req">*</span></label>
+    <div class="drop" id="drop">
+      <div class="thumb" id="thumb">🩻</div>
+      <div class="dtxt">
+        <b id="dropTitle">Click or drop the scan image here</b>
+        <span id="dropSub">JPG / PNG — compressed automatically before sending</span>
+      </div>
+      <input type="file" id="file" accept="image/*">
+    </div>
+
+    <button id="send">Send scan for AI pre-read</button>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG =================
+   1) Paste your scan-flowchart webhook URL (Webhook Trigger 1): */
+const WEBHOOK_URL = "/api/proxy";
+/* 2) Live TRIO-DB tabs: in Google Sheets use File > Share > Publish to web,
+      choose CSV for each tab, and paste the three links here. */
+const PATIENTS_CSV = "PASTE_PUBLISHED_CSV_URL_FOR_PATIENTS_TAB";
+const ROOMS_CSV    = "PASTE_PUBLISHED_CSV_URL_FOR_ROOMS_TAB";
+const DOCTORS_CSV  = "PASTE_PUBLISHED_CSV_URL_FOR_DOCTORS_TAB";
+const MAX_B64 = 45000;   // keeps the image inside one Google Sheets cell
+/* ========================================== */
+
+/* ---- logos: tries several likely file names, hides if none exist ---- */
+function tryLogo(id, names) {
+  const el = document.getElementById(id); let i = 0;
+  el.onerror = () => { i++; if (i < names.length) el.src = names[i]; else el.style.display = "none"; };
+  el.src = names[0];
+}
+tryLogo("logoTri", ["./assets/tri.png","./assets/tri.png.png","./assets/T.R.I (1).png","./assets/trio.png","./assets/tri.jpg","./assets/tri.webp"]);
+tryLogo("logoAbba", ["./assets/abba.png","./assets/abba.png.png","./assets/abba.avif","./assets/abba.jpg","./assets/abba.webp"]);
+tryLogo("logoAfretec", ["./assets/afretec.png","./assets/afretec.png.png","./assets/afritec__logo.png","./assets/afritec.png","./assets/afretec.webp"]);
+tryLogo("logoAuil", ["./assets/auil.png","./assets/auil.png.png","./assets/auil.jpg","./assets/auil.webp"]);
+
+/* ---- tiny CSV parser ---- */
+function parseCSVmini(t) {
+  return t.split(/\r?\n/).map(l => {
+    const out = []; let cur = "", q = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (q) { if (c === '"' && l[i+1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { out.push(cur); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur); return out;
+  }).filter(r => r.length && r[0] !== "");
+}
+const fetchCSV = url => fetch(url + "&t=" + Date.now(), {cache:"no-store"}).then(r => r.text()).then(parseCSVmini);
+
+/* ---- derive the scan type/region from the symptoms ---- */
+function deriveScan(sym) {
+  const s = String(sym || "").toLowerCase();
+  if (/(head|skull|confusion|conscious|dizzy)/.test(s))            return ["CT", "head"];
+  if (/(chest|rib|breath|lung|cough)/.test(s))                     return ["CT", "chest"];
+  if (/(abdomen|stomach|belly|stab)/.test(s))                      return ["CT", "abdomen"];
+  if (/(arm|wrist|elbow|shoulder|radius|humerus)/.test(s))         return ["X-Ray", "arm"];
+  if (/(leg|knee|ankle|tibia|femur|foot|hip)/.test(s))             return ["X-Ray", "leg"];
+  if (/(spine|back|neck)/.test(s))                                 return ["MRI", "spine"];
+  if (/(fracture|broken|fell|fall|trauma|accident|deformity)/.test(s)) return ["X-Ray", "affected limb"];
+  return ["X-Ray", "to determine"];
+}
+
+/* ---- load queue + rooms + doctors, fill everything automatically ---- */
+let PATIENTS = [], assignedRoom = "", assignedDoctor = "";
+const sel = document.getElementById("patientSel");
+
+async function boot() {
+  try {
+    const [pts, rooms, docs] = await Promise.all([fetchCSV(PATIENTS_CSV), fetchCSV(ROOMS_CSV), fetchCSV(DOCTORS_CSV)]);
+    PATIENTS = pts.filter(r => r[0] && r[0].toLowerCase() !== "patient_id")
+                  .sort((a,b) => Number(b[5]) - Number(a[5]));   // urgency first
+    // room + radiologist
+    const roomRows = rooms.filter(r => r[0] && r[0].toLowerCase() !== "room_id");
+    const freeImaging = roomRows.find(r => String(r[1]).trim().toLowerCase() === "imaging" && String(r[2]).trim().toLowerCase() === "free");
+    const docRows = docs.filter(r => r[0] && r[0].toLowerCase() !== "doctor_name");
+    const radiologist = docRows.find(d => String(d[3]).toLowerCase().includes("radiolog"));
+    assignedRoom   = freeImaging ? String(freeImaging[0]) : "NO IMAGING ROOM FREE";
+    assignedDoctor = radiologist ? "Dr. " + String(radiologist[0]) : "Radiologist on call";
+    // dropdown
+    sel.innerHTML = PATIENTS.map((p,i) =>
+      `<option value="${i}">${p[1] || p[0]} — ${String(p[3]||"").slice(0,40)} (score ${p[5]})</option>`).join("");
+    // pre-select the patient who most likely needs imaging
+    const best = PATIENTS.findIndex(p => /(fracture|broken|fell|fall|trauma|accident|deformity|head|chest)/i.test(p[3] || ""));
+    sel.value = best >= 0 ? best : 0;
+    fillCard();
+  } catch (e) {
+    sel.innerHTML = '<option value="">could not load the ER queue — check internet</option>';
+  }
+}
+function fillCard() {
+  const p = PATIENTS[Number(sel.value)];
+  if (!p) return;
+  const [st, sr] = deriveScan(p[3]);
+  document.getElementById("apSym").textContent = p[3] || "—";
+  document.getElementById("apScore").textContent = (p[5] || "?") + " · " + (p[6] || "");
+  document.getElementById("apScan").textContent = st + " — " + sr;
+  document.getElementById("apRoom").textContent = assignedRoom || "—";
+  document.getElementById("apDoc").textContent = assignedDoctor || "—";
+  document.getElementById("autoCard").classList.add("show");
+}
+sel.addEventListener("change", fillCard);
+boot();
+
+/* ---- image attach + compression ---- */
+let imageB64 = "";
+const drop = document.getElementById("drop");
+const fileInput = document.getElementById("file");
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => {
+  e.preventDefault(); drop.classList.remove("over");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+function handleFile(f) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      let w = 480, q = 0.62, b64 = "";
+      do {
+        const scale = Math.min(1, w / img.width);
+        const cw = Math.max(1, Math.round(img.width * scale));
+        const ch = Math.max(1, Math.round(img.height * scale));
+        const cv = document.createElement("canvas");
+        cv.width = cw; cv.height = ch;
+        cv.getContext("2d").drawImage(img, 0, 0, cw, ch);
+        b64 = cv.toDataURL("image/jpeg", q).split(",")[1];
+        if (b64.length > MAX_B64) { if (q > 0.4) q -= 0.1; else w -= 80; }
+      } while (b64.length > MAX_B64 && w > 120);
+      imageB64 = b64;
+      document.getElementById("thumb").innerHTML = '<img src="data:image/jpeg;base64,' + b64 + '">';
+      document.getElementById("dropTitle").textContent = f.name;
+      document.getElementById("dropSub").textContent = "attached · " + Math.round(b64.length * 0.75 / 1024) + " KB after compression";
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(f);
+}
+
+/* ---- submit ---- */
+function show(ok, msg) {
+  const s = document.getElementById("status");
+  s.className = "status " + (ok ? "ok" : "err");
+  s.textContent = msg;
+}
+document.getElementById("send").addEventListener("click", async () => {
+  const p = PATIENTS[Number(sel.value)];
+  if (!p) return show(false, "Pick a patient from the list.");
+  if (!imageB64) return show(false, "Attach the scan picture first.");
+  const [st, sr] = deriveScan(p[3]);
+  const payload = {
+    patient_id: String(p[0]),
+    name: String(p[1] || "Unknown"),
+    scan_type: st,
+    scan_region: sr,
+    original_symptoms: String(p[3] || ""),
+    original_urgency: Number(p[5] || 0),
+    room_id: assignedRoom,
+    assigned_doctor: assignedDoctor,
+    image_b64: imageB64
+  };
+  const btn = document.getElementById("send");
+  btn.disabled = true; btn.textContent = "Sending to TRIO-SCAN…";
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    show(true, "✓ Scan sent for " + payload.name + " — AI report will appear on the ER dashboard in a few seconds (room " + assignedRoom + ", " + assignedDoctor + ").");
+  } catch (e) {
+    show(false, "Could not reach the TRIO webhook (" + e.message + "). Check the WEBHOOK_URL in this file.");
+  }
+  btn.disabled = false; btn.textContent = "Send scan for AI pre-read";
+});
+</script>
+</body>
+</html>
