@@ -11,10 +11,10 @@ Radiologists read large volumes of scans under time pressure, and fatigue is lin
 ## How it works
 
 ```text
- Patient intake form (Next.js)          Scan intake page (scan-intake/)
+ Patient intake form (/)                Scan intake page (/scan)
    name, ID, symptoms, arrival mode        pick a patient from the live ER queue,
             │                              attach the scan image
-            ▼ /api/entries                           │ /api/proxy
+            ▼ /api/entries                           │ /api/scan
    ┌──────────────────────────────┐        ┌────────────────────────────────┐
    │ TRIO-INTAKE automation        │        │ TRIO-SCAN automation            │
    │ LLM triage → urgency score,   │        │ AI pre-read of the image,       │
@@ -25,37 +25,37 @@ Radiologists read large volumes of scans under time pressure, and fatigue is lin
           TRIO-DB (Google Sheets): patients · imaging rooms · doctors
                     │
                     ▼
-     ER dashboard (er-dashboard/) + WhatsApp alerts to staff
+     ER dashboard (/dashboard) + WhatsApp alerts to staff
 ```
 
 - **Intake** (`app/`): a responsive Next.js form. The server route forwards the submission to the triage automation, so the webhook URL never reaches the browser.
 - **Triage**: an LLM node in the Fusion visual automation platform scores urgency from the symptoms using a clinical triage prompt with structured JSON output. The automation itself lives in the Fusion platform, not in this repo.
-- **Scan intake** (`scan-intake/`): a single-page tool for the imaging desk. It loads the ER queue sorted by urgency, suggests the scan type and region from the symptoms, picks a free imaging room and an on-call radiologist, compresses the image and sends it for the AI pre-read.
-- **ER dashboard** (`er-dashboard/`): the command-center screen for staff. It polls TRIO-DB every 5 seconds and shows the patient queue by urgency, imaging-room status, alerts, on-call doctors and the AI scan reports.
+- **Scan intake** (`public/scan/`, served at `/scan`): a single-page tool for the imaging desk. It loads the ER queue sorted by urgency, suggests the scan type and region from the symptoms, picks a free imaging room and an on-call radiologist, compresses the image and sends it for the AI pre-read.
+- **ER dashboard** (`public/dashboard/`, served at `/dashboard`): the command-center screen for staff. It polls TRIO-DB every 5 seconds and shows the patient queue by urgency, imaging-room status, alerts, on-call doctors and the AI scan reports.
 
 ![ER dashboard in demo mode](docs/er-dashboard.png)
 
 ## Running it
 
-### Intake form
+One Next.js app serves all three pages:
+
+| Page | Path | Live |
+|---|---|---|
+| Patient intake form | `/` | [open](https://aiss-trio-hackathon-mjhp.vercel.app/) |
+| Scan intake | `/scan` | [open](https://aiss-trio-hackathon-mjhp.vercel.app/scan) |
+| ER dashboard | `/dashboard` | [open](https://aiss-trio-hackathon-mjhp.vercel.app/dashboard) |
+
+The scan intake and the dashboard run on sample patients until the published-CSV links of the TRIO-DB tabs are pasted into their config. Submitting a patient or a scan needs the automations' webhooks.
 
 ```bash
 npm install
-cp .env.example .env.local   # set TRIO_WEBHOOK_URL
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local   # set TRIO_WEBHOOK_URL and TRIO_SCAN_WEBHOOK_URL
+npm run dev                  # http://localhost:3000, /scan, /dashboard
 ```
-
-### Scan intake
-
-`scan-intake/` is a static page plus one Vercel serverless function. Deploy it as its own Vercel project with `scan-intake` as the root directory and set `TRIO_SCAN_WEBHOOK_URL`. In `index.html`, paste the published-CSV links of the three TRIO-DB tabs.
-
-### ER dashboard
-
-`er-dashboard/` is a single static page: open `index.html` or deploy the folder to any static host. With no links configured it runs in demo mode with sample patients; paste the published-CSV links of the TRIO-DB tabs into the `CSV` object to go live.
 
 ## Tech stack
 
-Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Vercel serverless functions · Fusion AI automation platform · Groq LLM · Google Sheets · WhatsApp (Green API)
+Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Vercel · Fusion AI automation platform · Groq LLM · Google Sheets · WhatsApp (Green API)
 
 ## Team
 
