@@ -60,6 +60,6 @@ Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Vercel · Fusion AI au
 ## Team
 
 - **Jihane Erraji** and **Khalil Berjaoui**: programming
-- Mehdi El Karimi
+- **Mehdi El Karimi**: intake form design
 - Zineb El Koussaimi
 - Asma Ouabd
