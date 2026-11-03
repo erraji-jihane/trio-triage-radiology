@@ -33,11 +33,15 @@ Radiologists read large volumes of scans under time pressure, and fatigue is lin
 - **Scan intake** (`public/scan/`, served at `/scan`): a single-page tool for the imaging desk. It loads the ER queue sorted by urgency, suggests the scan type and region from the symptoms, picks a free imaging room and an on-call radiologist, compresses the image and sends it for the AI pre-read.
 - **ER dashboard** (`public/dashboard/`, served at `/dashboard`): the command-center screen for staff. It polls TRIO-DB every 5 seconds and shows the patient queue by urgency, imaging-room status, alerts, on-call doctors and the AI scan reports.
 
+| Patient intake | Scan intake |
+|---|---|
+| ![Patient intake form](docs/intake.png) | ![Scan intake page](docs/scan-intake.png) |
+
 ![ER dashboard in demo mode](docs/er-dashboard.png)
 
 ## Running it
 
-One Next.js app serves all three pages:
+One Next.js app serves all three pages, linked by a switcher at the bottom of each page:
 
 | Page | Path | Live |
 |---|---|---|
