@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T.R.I.O — ER Command Center</title>
+<style>
+  /* ====== T.R.I.O brand theme — matches the intake page (navy / white clinical) ====== */
+  :root {
+    color-scheme: light;
+    --page:        #eef2f7;   /* soft blue-gray page plane */
+    --surface:     #ffffff;   /* cards */
+    --surface-2:   #f5f8fb;
+    --navy:        #1d3f6e;   /* brand primary (intake sidebar) */
+    --navy-deep:   #14304f;
+    --ink:         #12263f;   /* primary text */
+    --ink-2:       #44546b;   /* secondary text */
+    --muted:       #7b8798;
+    --hairline:    rgba(18,38,63,0.12);
+    --grid:        #e4e9f0;
+    /* status palette — fixed, never reused as series */
+    --good:        #0ca30c;  --good-ink:     #067506;
+    --warning:     #fab219;  --warning-ink:  #8f6400;
+    --serious:     #ec835a;  --serious-ink:  #b35434;
+    --critical:    #d03b3b;  --critical-ink: #b32e2e;
+    --accent:      #d03b3b;  /* the T.R.I.O pulse red */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    padding: 0 0 40px;
+  }
+  /* ====== brand header bar (navy, like the intake sidebar) ====== */
+  .topbar {
+    background: linear-gradient(135deg, var(--navy-deep), var(--navy));
+    color: #fff;
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  /* app logo — transparent, straight on the navy bar */
+  .applogo-box { display: flex; align-items: center; }
+  .applogo { height: 52px; width: auto; object-fit: contain; display: block; }
+  .brand .tagline {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+  }
+  .dept {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); border-left: 1px solid rgba(255,255,255,0.25);
+    padding-left: 18px; line-height: 1.6;
+  }
+  .dept b { display: block; color: #fff; font-size: 14px; letter-spacing: .08em; }
+  /* partner logos — right side of the header, no background */
+  .partners {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .plogo { height: 38px; width: auto; object-fit: contain; display: block; }
+  /* the Afretec logo file has lots of empty space around it — boost it so it LOOKS the same size */
+  #logoAfretec { height: 76px; }
+  .live {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.85);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #35d06a; animation: pulse 2s infinite; }
+  .dot.demo { background: var(--warning); animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  main { padding: 18px 24px 0; }
+  /* KPI row */
+  .kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap: 12px; margin: 0 0 16px;
+  }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-top: 3px solid var(--navy);
+    border-radius: 10px; padding: 14px 16px;
+    box-shadow: 0 1px 2px rgba(18,38,63,0.05);
+  }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .kpi .value { font-size: 32px; font-weight: 700; margin-top: 4px; color: var(--navy); }
+  .kpi .value small { font-size: 15px; color: var(--ink-2); font-weight: 400; }
+  /* layout */
+  .grid {
+    display: grid; gap: 14px;
+    grid-template-columns: minmax(380px, 1.4fr) minmax(300px, 1fr);
+    align-items: start;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(18,38,63,0.05);
+  }
+  .panel h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--navy); background: var(--surface-2);
+    padding: 12px 16px; border-bottom: 1px solid var(--grid);
+    display: flex; align-items: center; gap: 8px; font-weight: 750;
+  }
+  .panel h2 .count {
+    margin-left: auto; font-size: 12px; color: var(--muted);
+    text-transform: none; letter-spacing: 0; font-weight: 500;
+  }
+  /* queue table */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 8px 12px; border-bottom: 1px solid var(--grid);
+  }
+  td {
+    padding: 10px 12px; border-bottom: 1px solid var(--grid);
+    color: var(--ink-2); vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface-2); }
+  td.name { color: var(--ink); font-weight: 600; }
+  td.score { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; color: var(--ink); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 650; padding: 3px 9px;
+    border-radius: 999px; border: 1px solid;
+  }
+  .badge::before { content: "●"; font-size: 9px; }
+  .badge.critical { color: var(--critical-ink); border-color: var(--critical); background: rgba(208,59,59,.08); }
+  .badge.urgent   { color: var(--warning-ink); border-color: var(--warning); background: rgba(250,178,25,.12); }
+  .badge.serious  { color: var(--serious-ink); border-color: var(--serious); background: rgba(236,131,90,.10); }
+  .badge.routine  { color: var(--good-ink); border-color: var(--good); background: rgba(12,163,12,.08); }
+  .scorebar { height: 4px; border-radius: 2px; background: var(--grid); margin-top: 5px; width: 72px; }
+  .scorebar i { display: block; height: 100%; border-radius: 2px; }
+  /* scan reports (TRIO-SCAN) */
+  .flagpill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 999px;
+    color: var(--warning-ink); border: 1px solid var(--warning); background: rgba(250,178,25,.12);
+    white-space: nowrap;
+  }
+  .clearpill { color: var(--muted); font-size: 12px; }
+  td.findings { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  #scansPanel th, #scansPanel td { padding-left: 8px; padding-right: 8px; }
+  #scansPanel tbody tr { cursor: pointer; }
+  .camico { font-size: 12px; margin-left: 5px; }
+  /* scan viewer modal — helps the doctor read the scan faster */
+  .modal-back {
+    position: fixed; inset: 0; background: rgba(18,38,63,.55);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 18px;
+  }
+  .modal-back.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px;
+    max-width: 980px; width: 100%; max-height: 92vh; overflow: auto; position: relative;
+    display: grid; grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr);
+    box-shadow: 0 24px 60px rgba(18,38,63,.35);
+  }
+  @media (max-width: 800px) { .modal { grid-template-columns: 1fr; } }
+  .modal .imgside {
+    background: #0b1420; display: flex; align-items: center; justify-content: center;
+    min-height: 340px; overflow: hidden;
+  }
+  .modal .imgside img { max-width: 100%; max-height: 88vh; cursor: zoom-in; transition: transform .2s; }
+  .modal .imgside img.zoom { transform: scale(2); cursor: zoom-out; }
+  .modal .imgside .noimg { color: #8fa3ba; font-size: 13px; padding: 30px; text-align: center; }
+  .modal .info { padding: 18px 20px 22px; font-size: 14px; color: var(--ink-2); }
+  .modal .info h3 { color: var(--navy); font-size: 17px; margin-bottom: 2px; padding-right: 30px; }
+  .modal .info .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  .modal .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .modal .sec { margin: 13px 0 0; }
+  .modal .sec .t { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; font-weight: 700; }
+  .modal .sec .b { color: var(--ink-2); line-height: 1.5; }
+  .modal .disclaimer { margin-top: 16px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--grid); padding-top: 10px; }
+  .modal .closex {
+    position: absolute; top: 10px; right: 12px; cursor: pointer;
+    color: var(--muted); font-size: 22px; line-height: 1; z-index: 2;
+  }
+  .modal .closex:hover { color: var(--ink); }
+  /* rooms board */
+  .rooms {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr));
+    gap: 10px; padding: 14px;
+  }
+  .room {
+    border-radius: 8px; padding: 10px 12px; border: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+  .room.free { border-color: rgba(12,163,12,.5); background: rgba(12,163,12,.04); }
+  .room.occupied { border-color: rgba(208,59,59,.5); background: rgba(208,59,59,.04); }
+  .room .rid { font-weight: 800; font-size: 15px; color: var(--navy); }
+  .room .rtype { color: var(--muted); font-size: 12px; text-transform: capitalize; }
+  .room .rstatus { font-size: 12px; font-weight: 700; margin-top: 6px; display:flex; align-items:center; gap:5px;}
+  .room.free .rstatus { color: var(--good-ink); }
+  .room.occupied .rstatus { color: var(--critical-ink); }
+  .room .rpatient { font-size: 11px; color: var(--ink-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* alerts */
+  .alerts { padding: 6px 0; }
+  .alert-row {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 16px; border-bottom: 1px solid var(--grid);
+    font-size: 13px; color: var(--ink-2);
+  }
+  .alert-row:last-child { border-bottom: none; }
+  .alert-row .icon { color: var(--warning-ink); font-size: 15px; }
+  .alert-row b { color: var(--ink); }
+  .alert-row .when { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .empty { padding: 18px 16px; color: var(--muted); font-size: 13px; }
+  /* doctors */
+  .docs { padding: 6px 0; }
+  .doc-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px; border-bottom: 1px solid var(--grid); font-size: 13px;
+  }
+  .doc-row:last-child { border-bottom: none; }
+  .doc-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: var(--surface-2); border: 1px solid var(--hairline);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 12px; color: var(--navy);
+  }
+  .doc-row .dname { color: var(--ink); font-weight: 600; }
+  .doc-row .dspec { color: var(--muted); font-size: 12px; text-transform: capitalize; }
+  .doc-row .dphone { margin-left: auto; color: var(--ink-2); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .footer { margin-top: 16px; padding: 0 24px; color: var(--muted); font-size: 12px; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="applogo-box">
+      <img class="applogo" id="logoTri" alt="">
+    </div>
+    <div class="tagline">Triage, Routing &amp; Imaging<br>Orchestration</div>
+  </div>
+  <div class="dept">Emergency Department<b>ER Command Center</b></div>
+  <!-- partner logos, right side of the header -->
+  <div class="partners">
+    <img class="plogo" id="logoAbba" alt="">
+    <img class="plogo" id="logoAfretec" alt="">
+    <img class="plogo" id="logoAuil" alt="">
+  </div>
+  <script>
+  /* ===== FINAL logo loader =====
+     1) Asks the server for the real list of files in ./assets/ and matches by keyword
+        (so ANY file name works: spaces, (1), .png.png, capitals, avif...).
+     2) If the listing isn't available, falls back to trying a long list of likely names. */
+  const LOGOS = [
+    { id: "logoAbba",    keys: ["abba"] },
+    { id: "logoAfretec", keys: ["afretec", "afritec"] },
+    { id: "logoAuil",    keys: ["auil", "akhawayn"] },
+    { id: "logoTri",     keys: ["t.r.i", "tri", "logo"] }
+  ];
+  const FALLBACKS = {
+    logoTri:     ["tri.png","tri.png.png","T.R.I (1).png","T.R.I(1).png","T.R.I.png","trio.png","tri.jpg","tri.jpeg","tri.webp","tri.avif","tri.svg","logo.png"],
+    logoAbba:    ["abba.png","abba.png.png","abba.avif","abba.jpg","abba.jpeg","abba.webp","abba.svg","ABBA.png"],
+    logoAfretec: ["afretec.png","afretec.png.png","afritec__logo.png","afritec.png","afretec network.png","afretec.jpg","afretec.webp","afretec.avif","afretec.svg"],
+    logoAuil:    ["auil.png","auil.png.png","auil.jpg","auil.jpeg","auil.webp","auil.avif","auil.svg","akhawayn.png"]
+  };
+  function tryList(el, urls) {
+    let i = 0;
+    el.onerror = () => { i++; if (i < urls.length) el.src = urls[i]; else el.style.display = "none"; };
+    el.src = urls[0];
+  }
+  async function loadLogos() {
+    let files = [];
+    try {
+      const res = await fetch("./assets/", { cache: "no-store" });
+      if (res.ok) {
+        const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+        files = [...doc.querySelectorAll("a")]
+          .map(a => a.getAttribute("href") || "")
+          .filter(h => /\.(png|jpe?g|webp|avif|svg|gif)$/i.test(h));
+      }
+    } catch (e) {}
+    const used = new Set();
+    for (const cfg of LOGOS) {
+      const el = document.getElementById(cfg.id);
+      const hit = files.find(f => !used.has(f) &&
+        cfg.keys.some(k => decodeURIComponent(f).toLowerCase().includes(k)));
+      if (hit) {
+        used.add(hit);
+        const name = decodeURIComponent(hit).split("/").pop();
+        el.onerror = () => tryList(el, FALLBACKS[cfg.id].map(n => "./assets/" + n));
+        el.src = "./assets/" + encodeURIComponent(name);
+      } else {
+        tryList(el, FALLBACKS[cfg.id].map(n => "./assets/" + n));
+      }
+    }
+  }
+  loadLogos();
+  </script>
+  <div class="live">
+    <span class="dot" id="liveDot"></span>
+    <span id="liveText">connecting…</span>
+    <span id="clock" style="font-variant-numeric:tabular-nums;"></span>
+  </div>
+</div>
+<main>
+<div class="kpis">
+  <div class="kpi"><div class="label">Patients in queue</div><div class="value" id="kpiQueue">–</div></div>
+  <div class="kpi"><div class="label">Critical now</div><div class="value" id="kpiCritical" style="color:var(--critical-ink)">–</div></div>
+  <div class="kpi"><div class="label">Rooms free</div><div class="value" id="kpiRooms">–</div></div>
+  <div class="kpi"><div class="label">Scans flagged</div><div class="value" id="kpiScans" style="color:var(--serious-ink)">–</div></div>
+  <div class="kpi"><div class="label">Staff alerts</div><div class="value" id="kpiAlerts" style="color:var(--warning-ink)">–</div></div>
+</div>
+<div class="grid">
+  <div class="col">
+    <div class="panel">
+      <h2>ER Queue — ranked by AI urgency score <span class="count" id="queueCount"></span></h2>
+      <div id="queuePanel"><div class="empty">Waiting for data…</div></div>
+    </div>
+    <div class="panel">
+      <h2>AI Scan Reports — TRIO-SCAN <span class="count" id="scanCount"></span></h2>
+      <div id="scansPanel"><div class="empty">No scan reports yet.</div></div>
+    </div>
+    <div class="panel">
+      <h2>⚠ Staff alerts <span class="count" id="alertCount"></span></h2>
+      <div class="alerts" id="alertsPanel"><div class="empty">No alerts — all patients placed.</div></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel">
+      <h2>Rooms board <span class="count" id="roomCount"></span></h2>
+      <div class="rooms" id="roomsPanel"></div>
+    </div>
+    <div class="panel">
+      <h2>On-call doctors</h2>
+      <div class="docs" id="docsPanel"><div class="empty">No doctors list.</div></div>
+    </div>
+  </div>
+</div>
+<p class="footer" id="footer">T.R.I.O · Triage, Routing &amp; Imaging Orchestration · Fusion AI Hackathon · data refreshes every 5 s · the doctor keeps the final word</p>
+</main>
+
+<!-- scan viewer modal (TRIO-SCAN assist) -->
+<div class="modal-back" id="scanModal">
+  <div class="modal">
+    <span class="closex" onclick="closeScan()">✕</span>
+    <div class="imgside" id="modalImg"></div>
+    <div class="info" id="modalInfo"></div>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+// Published-CSV links of the TRIO-DB tabs (File > Share > Publish to web > CSV).
+// Left empty, the dashboard runs in demo mode with sample patients.
+const CSV = {
+  patients: "",  // patients_queue tab
+  rooms:    "",  // rooms tab
+  alerts:   "",  // alerts tab
+  doctors:  "",  // doctors_numbers tab
+  scans:    ""   // ScanReports tab
+};
+const REFRESH_MS = 5000;
+/* ========================================== */
+const DEMO = {
+  patients: [
+    ["web-001","Khalil B.","N/A","stabbed in abdomen, heavy bleeding","ambulance","95","critical","Immediate resuscitation required","2026-07-16T01:12:00Z"],
+    ["web-002","Samira E.","AB1234","chest pain radiating to left arm","ambulance","82","critical","Suspected acute coronary syndrome","2026-07-16T01:20:00Z"],
+    ["web-003","Omar T.","CD5678","fell from ladder, leg deformity","walk-in","64","urgent","Possible fracture, needs imaging","2026-07-16T01:25:00Z"],
+    ["web-004","Asmae R.","N/A","persistent fever 39.5°C","walk-in","55","urgent","Fever workup required","2026-07-16T01:31:00Z"],
+    ["web-005","Hajar L.","EF9012","small cut on finger","walk-in","15","routine","Superficial wound, cleaning and dressing","2026-07-16T01:40:00Z"]
+  ],
+  rooms: [
+    ["R1","trauma","occupied","web-001"],
+    ["R2","trauma","occupied","P-993"],
+    ["R3","general","free",""],
+    ["R4","imaging","free",""],
+    ["R5","general","occupied","P-871"],
+    ["R6","trauma","free",""],
+    ["R7","imaging","occupied","web-002"],
+    ["R8","general","free",""]
+  ],
+  alerts: [
+    ["web-002","Samira E.","82","trauma","NO ROOM — STAFF ACTION NEEDED","2026-07-16T01:21:10Z"]
+  ],
+  doctors: [
+    ["Mohamed ben","1","212600000001","radiologist"],
+    ["Ahmed imad","2","212600000002","surgeon"],
+    ["Sara Alaoui","3","212600000003","general practitioner"],
+    ["Youssef Tazi","4","212600000004","cardiologist"],
+    ["Fatima Ezzahra","5","212600000005","anesthesiologist"]
+  ],
+  scans: [
+    // patient_id,scan_type,scan_region,findings,severity,confidence,recommendation,revised_urgency,flag,scanned_at,image_b64,ai_flags
+    ["P-4822","CT Chest","chest","Multiple right-sided rib fractures with small apical pneumothorax. Pulmonary contusion likely given mechanism of injury.","severe","88","Immediate chest tube evaluation; trauma surgery consult","92","true","2026-07-16T01:35:00Z","",""],
+    ["web-003","X-Ray Leg","left tibia","Displaced mid-shaft tibial fracture without open wound. Marked soft tissue swelling around the fracture site.","moderate","91","Orthopedic consult for reduction and casting","62","true","2026-07-16T01:42:00Z","","Transverse fracture line mid-shaft | Displacement > 5mm | No open wound visible | Soft tissue swelling adjacent"],
+    ["web-005","X-Ray Hand","left hand","No fracture or dislocation identified. Minor superficial soft tissue swelling only.","normal","93","Clean and dress wound; discharge with care advice","10","false","2026-07-16T01:48:00Z","",""]
+  ]
+};
+const demoMode = !CSV.patients && !CSV.rooms;
+/* --- tiny CSV parser (handles quoted fields) --- */
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"' && text[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"') q = false;
+      else cur += c;
+    } else {
+      if (c === '"') q = true;
+      else if (c === ',') { row.push(cur); cur = ""; }
+      else if (c === '\n' || c === '\r') {
+        if (cur !== "" || row.length) { row.push(cur); rows.push(row); row = []; cur = ""; }
+        if (c === '\r' && text[i+1] === '\n') i++;
+      } else cur += c;
+    }
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+function stripHeader(rows, firstHeaderCell) {
+  if (rows.length && String(rows[0][0]).trim().toLowerCase() === firstHeaderCell) return rows.slice(1);
+  return rows;
+}
+async function fetchTab(url, headerCell) {
+  const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
+  return stripHeader(parseCSV(await res.text()), headerCell);
+}
+/* --- rendering --- */
+const catClass = c => {
+  c = String(c || "").toLowerCase();
+  return c === "critical" ? "critical" : c === "urgent" ? "urgent" : "routine";
+};
+const catColor = c => c === "critical" ? "var(--critical)" : c === "urgent" ? "var(--warning)" : "var(--good)";
+const sevClass = s => {
+  s = String(s || "").toLowerCase();
+  return s === "severe" ? "critical" : s === "moderate" ? "serious" : s === "mild" ? "urgent" : "routine";
+};
+const sevColor = s => {
+  s = String(s || "").toLowerCase();
+  return s === "severe" ? "var(--critical)" : s === "moderate" ? "var(--serious)" : s === "mild" ? "var(--warning)" : "var(--good)";
+};
+const isFlagged = v => String(v || "").trim().toLowerCase() === "true";
+const fmtTime = iso => {
+  const d = new Date(iso);
+  return isNaN(d) ? String(iso || "") : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+function renderQueue(rows) {
+  const sorted = rows.filter(r => r[0]).slice().sort((a,b) => Number(b[5]) - Number(a[5]));
+  document.getElementById("kpiQueue").textContent = sorted.length;
+  document.getElementById("kpiCritical").textContent = sorted.filter(r => catClass(r[6]) === "critical").length;
+  document.getElementById("queueCount").textContent = sorted.length + " patients";
+  if (!sorted.length) { document.getElementById("queuePanel").innerHTML = '<div class="empty">Queue is empty.</div>'; return; }
+  let html = '<table role="table"><thead><tr><th>Score</th><th>Patient</th><th>Symptoms</th><th>Arrival</th><th>Triage</th><th>Time</th></tr></thead><tbody>';
+  for (const r of sorted) {
+    const cls = catClass(r[6]);
+    html += `<tr>
+      <td class="score">${r[5] ?? ""}<div class="scorebar"><i style="width:${Math.min(100, Number(r[5])||0)}%;background:${catColor(cls)}"></i></div></td>
+      <td class="name">${esc(r[1] || r[0])}</td>
+      <td title="${esc(r[7]||"")}">${esc(r[3] || "")}</td>
+      <td>${esc(r[4] || "")}</td>
+      <td><span class="badge ${cls}">${cls}</span></td>
+      <td style="font-variant-numeric:tabular-nums">${fmtTime(r[8])}</td>
+    </tr>`;
+  }
+  document.getElementById("queuePanel").innerHTML = html + "</tbody></table>";
+}
+let SCANS_CACHE = [];
+function renderScans(rows) {
+  // ScanReports: patient_id,scan_type,scan_region,findings,severity,confidence,recommendation,revised_urgency,flag,scanned_at,image_b64,ai_flags
+  const scans = rows.filter(r => r[0]).slice().sort((a,b) => Number(b[7]) - Number(a[7]));
+  SCANS_CACHE = scans;
+  const flagged = scans.filter(r => isFlagged(r[8])).length;
+  document.getElementById("kpiScans").textContent = flagged;
+  document.getElementById("scanCount").textContent = scans.length ? scans.length + " scans · " + flagged + " flagged — click a row to open the scan" : "";
+  if (!scans.length) { document.getElementById("scansPanel").innerHTML = '<div class="empty">No scan reports yet.</div>'; return; }
+  let html = '<table role="table"><thead><tr><th>Rev. score</th><th>Patient</th><th>Scan</th><th>Findings</th><th>Severity</th><th>Conf.</th><th>Flag</th><th>Time</th></tr></thead><tbody>';
+  scans.forEach((r, idx) => {
+    const sev = String(r[4] || "normal").toLowerCase();
+    const cls = sevClass(sev);
+    const flag = isFlagged(r[8]);
+    const hasImg = !!(r[10] && String(r[10]).length > 40);
+    html += `<tr onclick="openScan(${idx})" title="Open scan viewer">
+      <td class="score">${r[7] ?? ""}<div class="scorebar"><i style="width:${Math.min(100, Number(r[7])||0)}%;background:${sevColor(sev)}"></i></div></td>
+      <td class="name">${esc(r[0])}${hasImg ? '<span class="camico">📷</span>' : ''}<div style="font-size:11px;color:var(--muted);font-weight:400">${esc(r[2] || "")}</div></td>
+      <td>${esc(r[1] || "")}</td>
+      <td class="findings" title="${esc((r[3]||"") + (r[6] ? " — Reco: " + r[6] : ""))}">${esc(r[3] || "")}</td>
+      <td><span class="badge ${cls}">${esc(sev)}</span></td>
+      <td style="font-variant-numeric:tabular-nums">${esc(r[5] || "")}%</td>
+      <td>${flag ? '<span class="flagpill">⚑ review</span>' : '<span class="clearpill">cleared</span>'}</td>
+      <td style="font-variant-numeric:tabular-nums">${fmtTime(r[9])}</td>
+    </tr>`;
+  });
+  document.getElementById("scansPanel").innerHTML = html + "</tbody></table>";
+}
+/* --- scan viewer modal --- */
+function imgSrcFrom(v) {
+  v = String(v || "").trim();
+  if (!v) return "";
+  if (v.startsWith("data:") || v.startsWith("http")) return v;
+  return "data:image/jpeg;base64," + v;   // raw base64 stored in the sheet
+}
+function openScan(i) {
+  const r = SCANS_CACHE[i];
+  if (!r) return;
+  const sev = String(r[4] || "normal").toLowerCase();
+  const cls = sevClass(sev);
+  const flag = isFlagged(r[8]);
+  const src = imgSrcFrom(r[10]);
+  document.getElementById("modalImg").innerHTML = src
+    ? `<img src="${src}" alt="scan image" onclick="this.classList.toggle('zoom')">`
+    : `<div class="noimg">No scan image attached for this report.<br>Upload one from the T.R.I.O Scan Intake page.</div>`;
+  document.getElementById("modalInfo").innerHTML = `
+    <h3>${esc(r[0])} — ${esc(r[1] || "scan")}</h3>
+    <div class="meta">Region: ${esc(r[2] || "—")} · ${fmtTime(r[9])}</div>
+    <div class="chips">
+      <span class="badge ${cls}">${esc(sev)}</span>
+      ${flag ? '<span class="flagpill">⚑ radiologist review</span>' : '<span class="clearpill">cleared</span>'}
+    </div>
+    <div class="sec"><div class="t">AI confidence / revised urgency</div>
+      <div class="b" style="font-variant-numeric:tabular-nums">${esc(r[5] || "?")}% confidence · urgency ${esc(r[7] || "?")} /100</div></div>
+    <div class="sec"><div class="t">AI pre-read — findings</div><div class="b">${esc(r[3] || "—")}</div></div>
+    ${r[11] ? `<div class="sec"><div class="t">⚑ AI flags on this scan</div><div class="b">${String(r[11]).split("|").map(f => f.trim()).filter(Boolean).map(f => "⚑ " + esc(f)).join("<br>")}</div></div>` : ""}
+    <div class="sec"><div class="t">Recommended next step</div><div class="b">${esc(r[6] || "—")}</div></div>
+    <div class="disclaimer">TRIO-SCAN AI assist · preliminary read to speed up review — the physician keeps the final word.</div>`;
+  document.getElementById("scanModal").classList.add("open");
+}
+function closeScan() { document.getElementById("scanModal").classList.remove("open"); }
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeScan(); });
+document.getElementById("scanModal").addEventListener("click", e => { if (e.target === e.currentTarget) closeScan(); });
+function renderRooms(rows) {
+  const rooms = rows.filter(r => r[0]);
+  const free = rooms.filter(r => String(r[2]).trim().toLowerCase() === "free");
+  document.getElementById("kpiRooms").innerHTML = free.length + '<small> / ' + rooms.length + '</small>';
+  document.getElementById("roomCount").textContent = free.length + " free";
+  document.getElementById("roomsPanel").innerHTML = rooms.map(r => {
+    const isFree = String(r[2]).trim().toLowerCase() === "free";
+    return `<div class="room ${isFree ? "free" : "occupied"}">
+      <div class="rid">${esc(r[0])}</div>
+      <div class="rtype">${esc(r[1] || "")}</div>
+      <div class="rstatus">${isFree ? "✓ FREE" : "✕ OCCUPIED"}</div>
+      <div class="rpatient">${isFree ? "&nbsp;" : esc(r[3] || "")}</div>
+    </div>`;
+  }).join("");
+}
+function renderAlerts(rows) {
+  const alerts = rows.filter(r => r[0]).slice().reverse();
+  document.getElementById("kpiAlerts").textContent = alerts.length;
+  document.getElementById("alertCount").textContent = alerts.length ? alerts.length + " active" : "";
+  if (!alerts.length) { document.getElementById("alertsPanel").innerHTML = '<div class="empty">No alerts — all patients placed.</div>'; return; }
+  document.getElementById("alertsPanel").innerHTML = alerts.map(a => `
+    <div class="alert-row">
+      <span class="icon">⚠</span>
+      <span><b>${esc(a[1] || a[0])}</b> (score ${esc(a[2]||"?")}) needs a <b>${esc(a[3]||"?")}</b> room — ${esc(a[4]||"no room available")}</span>
+      <span class="when">${fmtTime(a[5])}</span>
+    </div>`).join("");
+}
+function renderDocs(rows) {
+  const docs = rows.filter(r => r[0]);
+  if (!docs.length) return;
+  document.getElementById("docsPanel").innerHTML = docs.map(d => `
+    <div class="doc-row">
+      <div class="doc-avatar">${esc(String(d[0]||"?").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase())}</div>
+      <div><div class="dname">Dr. ${esc(d[0])}</div><div class="dspec">${esc(d[3] || "")}</div></div>
+      <div class="dphone">${esc(d[2] || "")}</div>
+    </div>`).join("");
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+}
+/* --- main loop --- */
+async function tick() {
+  const dot = document.getElementById("liveDot"), txt = document.getElementById("liveText");
+  try {
+    let p, r, a, d, s;
+    if (demoMode) {
+      ({ patients: p, rooms: r, alerts: a, doctors: d, scans: s } = DEMO);
+      dot.className = "dot demo"; txt.textContent = "DEMO MODE — paste CSV links to go live";
+    } else {
+      [p, r, a, d, s] = await Promise.all([
+        CSV.patients ? fetchTab(CSV.patients, "patient_id") : [],
+        CSV.rooms    ? fetchTab(CSV.rooms, "room_id")       : [],
+        CSV.alerts   ? fetchTab(CSV.alerts, "patient_id")   : [],
+        CSV.doctors  ? fetchTab(CSV.doctors, "doctor_name") : [],
+        CSV.scans    ? fetchTab(CSV.scans, "patient_id").catch(() => []) : []
+      ]);
+      dot.className = "dot"; txt.textContent = "LIVE — TRIO-DB";
+    }
+    renderQueue(p); renderScans(s); renderRooms(r); renderAlerts(a); renderDocs(d);
+  } catch (e) {
+    dot.className = "dot demo"; txt.textContent = "connection issue — retrying…";
+  }
+}
+setInterval(() => {
+  document.getElementById("clock").textContent = new Date().toLocaleTimeString();
+}, 1000);
+tick();
+setInterval(tick, REFRESH_MS);
+</script>
+</body>
+</html>

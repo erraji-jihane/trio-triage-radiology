@@ -25,12 +25,15 @@ Radiologists read large volumes of scans under time pressure, and fatigue is lin
           TRIO-DB (Google Sheets): patients · imaging rooms · doctors
                     │
                     ▼
-     ER dashboard + WhatsApp alerts to staff
+     ER dashboard (er-dashboard/) + WhatsApp alerts to staff
 ```
 
 - **Intake** (`app/`): a responsive Next.js form. The server route forwards the submission to the triage automation, so the webhook URL never reaches the browser.
 - **Triage**: an LLM node in the Fusion visual automation platform scores urgency from the symptoms using a clinical triage prompt with structured JSON output. The automation itself lives in the Fusion platform, not in this repo.
 - **Scan intake** (`scan-intake/`): a single-page tool for the imaging desk. It loads the ER queue sorted by urgency, suggests the scan type and region from the symptoms, picks a free imaging room and an on-call radiologist, compresses the image and sends it for the AI pre-read.
+- **ER dashboard** (`er-dashboard/`): the command-center screen for staff. It polls TRIO-DB every 5 seconds and shows the patient queue by urgency, imaging-room status, alerts, on-call doctors and the AI scan reports.
+
+![ER dashboard in demo mode](docs/er-dashboard.png)
 
 ## Running it
 
@@ -45,6 +48,10 @@ npm run dev                  # http://localhost:3000
 ### Scan intake
 
 `scan-intake/` is a static page plus one Vercel serverless function. Deploy it as its own Vercel project with `scan-intake` as the root directory and set `TRIO_SCAN_WEBHOOK_URL`. In `index.html`, paste the published-CSV links of the three TRIO-DB tabs.
+
+### ER dashboard
+
+`er-dashboard/` is a single static page: open `index.html` or deploy the folder to any static host. With no links configured it runs in demo mode with sample patients; paste the published-CSV links of the TRIO-DB tabs into the `CSV` object to go live.
 
 ## Tech stack
 
