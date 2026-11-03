@@ -1,5 +1,7 @@
 # T.R.I.O: Triage, Routing & Imaging Orchestration
 
+**Live demo:** [Patient intake](https://aiss-trio-hackathon-mjhp.vercel.app/) · [Scan intake](https://aiss-trio-hackathon-mjhp.vercel.app/scan) · [ER dashboard](https://aiss-trio-hackathon-mjhp.vercel.app/dashboard)
+
 An AI-assisted emergency-department workflow for radiology: patients are triaged from their symptoms at intake, routed to an imaging room and a radiologist, and their scans get an AI pre-read before a doctor looks at them.
 
 Built in a team of five at the **Fusion AI Hackathon** (AUI AI Summer School 2026), with ABA Technology and the Afretec Network.
