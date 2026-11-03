@@ -352,5 +352,15 @@ document.getElementById("send").addEventListener("click", async () => {
   btn.disabled = false; btn.textContent = "Send scan for AI pre-read";
 });
 </script>
+<!-- links the three TRIO pages (same as app/ViewSwitcher.tsx) -->
+<style>
+.trio-views{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1000;display:flex;gap:4px;padding:4px;
+  background:rgba(255,255,255,.92);border:1px solid #d7e4eb;border-radius:999px;box-shadow:0 8px 24px rgba(1,38,68,.15);
+  font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif}
+.trio-views a{padding:6px 14px;border-radius:999px;color:#06385e;text-decoration:none}
+.trio-views a:hover{background:#eaf2f6}
+.trio-views a[aria-current="page"]{background:#014275;color:#fff}
+</style>
+<nav class="trio-views" aria-label="TRIO pages"><a href="/">Intake</a><a href="/scan" aria-current="page">Scan</a><a href="/dashboard">Dashboard</a></nav>
 </body>
 </html>
