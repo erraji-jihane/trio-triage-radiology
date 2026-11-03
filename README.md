@@ -59,8 +59,7 @@ Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Vercel · Fusion AI au
 
 ## Team
 
-- Jihane Erraji
-- Khalil Berjaoui
+- **Jihane Erraji** and **Khalil Berjaoui**: programming
 - Mehdi El Karimi
 - Zineb El Koussaimi
 - Asma Ouabd
